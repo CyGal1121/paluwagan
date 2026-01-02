@@ -1,10 +1,11 @@
 import { z } from "zod";
+import { BRANCH_SLOTS, ORGANIZER_FEE } from "@/types/database";
 
 export const createGroupSchema = z.object({
   name: z
     .string()
-    .min(3, "Group name must be at least 3 characters")
-    .max(50, "Group name must be less than 50 characters"),
+    .min(3, "Branch name must be at least 3 characters")
+    .max(50, "Branch name must be less than 50 characters"),
   contribution_amount: z
     .number()
     .min(100, "Minimum contribution is ₱100")
@@ -20,11 +21,22 @@ export const createGroupSchema = z.object({
   }, "Start date must be today or in the future"),
   members_limit: z
     .number()
-    .min(2, "Minimum 2 members required")
-    .max(50, "Maximum 50 members allowed"),
+    .min(BRANCH_SLOTS, `Branch must have ${BRANCH_SLOTS} slots`)
+    .max(BRANCH_SLOTS, `Branch must have ${BRANCH_SLOTS} slots`)
+    .default(BRANCH_SLOTS),
   payout_order_method: z.enum(["fixed", "lottery", "organizer_assigned"], {
     required_error: "Please select a payout order method",
   }),
+  category_id: z.string().uuid("Please select a category").optional(),
+  organizer_joins: z.boolean().default(false), // Whether organizer joins as a member
+  organizer_fee_type: z.enum(["percentage", "fixed"], {
+    required_error: "Please select a fee type",
+  }).default("percentage"),
+  organizer_fee_value: z
+    .number()
+    .min(ORGANIZER_FEE.MIN_PERCENTAGE, `Minimum fee is ${ORGANIZER_FEE.MIN_PERCENTAGE}%`)
+    .max(ORGANIZER_FEE.MAX_PERCENTAGE, `Maximum fee is ${ORGANIZER_FEE.MAX_PERCENTAGE}%`)
+    .default(ORGANIZER_FEE.DEFAULT_PERCENTAGE),
   rules_json: z
     .object({
       grace_period_days: z.number().min(0).max(7).optional(),
@@ -36,8 +48,12 @@ export const createGroupSchema = z.object({
 
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;
 
+// Alias for semantic clarity
+export type CreateBranchInput = CreateGroupInput;
+
 export const joinGroupSchema = z.object({
   token: z.string().min(1, "Invite token is required"),
 });
 
 export type JoinGroupInput = z.infer<typeof joinGroupSchema>;
+export type JoinBranchInput = JoinGroupInput;

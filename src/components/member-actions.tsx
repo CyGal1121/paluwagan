@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { approveMember, removeMember, freezeMember } from "@/lib/actions/group";
+import { approveMember, removeMember, freezeMember, unfreezeMember } from "@/lib/actions/group";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,7 +22,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { MoreHorizontal, Check, X, Snowflake, Loader2 } from "lucide-react";
+import { MoreHorizontal, Check, X, Snowflake, Loader2, Trash2 } from "lucide-react";
 
 interface MemberActionsProps {
   groupId: string;
@@ -66,6 +66,19 @@ export function MemberActions({
       router.refresh();
     } else {
       toast.error(result.error || "Failed to freeze");
+    }
+  };
+
+  const handleUnfreeze = async () => {
+    setIsLoading(true);
+    const result = await unfreezeMember(groupId, userId);
+    setIsLoading(false);
+
+    if (result.success) {
+      toast.success("Member unfrozen");
+      router.refresh();
+    } else {
+      toast.error(result.error || "Failed to unfreeze");
     }
   };
 
@@ -133,35 +146,49 @@ export function MemberActions({
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {status === "active" && (
-            <DropdownMenuItem onClick={handleFreeze} disabled={isLoading}>
-              <Snowflake className="mr-2 h-4 w-4" />
-              Freeze Member
+      <div className="flex items-center gap-1">
+        {/* Direct delete button for easy removal */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={() => setRemoveDialogOpen(true)}
+          disabled={isLoading}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+
+        {/* More actions dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {status === "active" && (
+              <DropdownMenuItem onClick={handleFreeze} disabled={isLoading}>
+                <Snowflake className="mr-2 h-4 w-4" />
+                Freeze Member
+              </DropdownMenuItem>
+            )}
+            {status === "frozen" && (
+              <DropdownMenuItem onClick={handleUnfreeze} disabled={isLoading}>
+                <Check className="mr-2 h-4 w-4" />
+                Unfreeze Member
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setRemoveDialogOpen(true)}
+              className="text-destructive"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Remove Member
             </DropdownMenuItem>
-          )}
-          {status === "frozen" && (
-            <DropdownMenuItem onClick={handleApprove} disabled={isLoading}>
-              <Check className="mr-2 h-4 w-4" />
-              Unfreeze Member
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuSeparator />
-          <DropdownMenuItem
-            onClick={() => setRemoveDialogOpen(true)}
-            className="text-destructive"
-          >
-            <X className="mr-2 h-4 w-4" />
-            Remove Member
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <AlertDialog open={removeDialogOpen} onOpenChange={setRemoveDialogOpen}>
         <AlertDialogContent>

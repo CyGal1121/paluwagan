@@ -3,8 +3,11 @@ import { createClient } from "@/lib/supabase/server";
 import { JoinGroupForm } from "@/components/join-group-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Calendar, DollarSign, Clock, AlertCircle } from "lucide-react";
+import { Users, Calendar, DollarSign, Clock, AlertCircle, Wallet } from "lucide-react";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { getUserMembershipSummary, validateMembershipLimits } from "@/lib/actions/group";
+import { MembershipStatusCard } from "@/components/membership-status-card";
+import { calculateMonthlyEquivalent, MEMBERSHIP_LIMITS } from "@/types/database";
 
 interface InvitePageProps {
   params: Promise<{ token: string }>;
@@ -80,6 +83,9 @@ export default async function InvitePage({ params }: InvitePageProps) {
 
   // Check if already a member
   let existingMembership = null;
+  let membershipSummary = null;
+  let membershipValidation = null;
+
   if (user) {
     const { data } = await supabase
       .from("group_members")
@@ -88,9 +94,26 @@ export default async function InvitePage({ params }: InvitePageProps) {
       .eq("user_id", user.id)
       .single();
     existingMembership = data;
+
+    // Get user's current membership status
+    membershipSummary = await getUserMembershipSummary(user.id);
+
+    // Validate if user can join this branch
+    membershipValidation = await validateMembershipLimits(
+      user.id,
+      group.contribution_amount,
+      group.frequency as "weekly" | "biweekly" | "monthly"
+    );
   }
 
-  const canJoin = !isExpired && !isMaxedOut && !isFull && !existingMembership;
+  const hasLimitIssue = membershipValidation && !membershipValidation.canJoin;
+  const canJoin = !isExpired && !isMaxedOut && !isFull && !existingMembership && !hasLimitIssue;
+
+  // Calculate what joining would add to their monthly total
+  const newMonthlyEquivalent = calculateMonthlyEquivalent(
+    group.contribution_amount,
+    group.frequency as "weekly" | "biweekly" | "monthly"
+  );
 
   return (
     <div className="min-h-dvh flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
@@ -177,6 +200,36 @@ export default async function InvitePage({ params }: InvitePageProps) {
                     ? "You're already a member"
                     : "Your request is pending"}
                 </Badge>
+              </div>
+            )}
+
+            {/* Membership Limit Warning */}
+            {hasLimitIssue && membershipValidation && (
+              <div className="flex items-start gap-2 p-3 bg-destructive/10 text-destructive rounded-lg">
+                <AlertCircle className="h-5 w-5 mt-0.5 flex-shrink-0" />
+                <div className="text-sm">
+                  <p className="font-medium">Cannot join this branch</p>
+                  <p className="mt-1">{membershipValidation.reason}</p>
+                </div>
+              </div>
+            )}
+
+            {/* Show membership status for authenticated users who can still join */}
+            {user && membershipSummary && !existingMembership && !hasLimitIssue && (
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                  <Wallet className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm">
+                    This adds <span className="font-medium">{formatCurrency(newMonthlyEquivalent)}/month</span> to your contribution
+                  </span>
+                </div>
+                <MembershipStatusCard
+                  branchCount={membershipSummary.branchCount}
+                  monthlyTotal={membershipSummary.monthlyContributionTotal}
+                  remainingBranches={membershipSummary.remainingBranches}
+                  remainingBudget={membershipSummary.remainingMonthlyBudget}
+                  compact
+                />
               </div>
             )}
 

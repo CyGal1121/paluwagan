@@ -13,14 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ArrowLeft, CheckCircle, Clock, AlertCircle, Eye, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, Clock, AlertCircle, XCircle } from "lucide-react";
+import { CycleSelector } from "@/components/cycle-selector";
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils";
 import { LedgerActions } from "@/components/ledger-actions";
 
@@ -196,24 +190,11 @@ export default async function LedgerPage({ params, searchParams }: LedgerPagePro
         </div>
 
         {/* Cycle Selector */}
-        <Select
-          defaultValue={selectedCycleNumber.toString()}
-          onValueChange={(value) => {
-            window.location.href = `/groups/${groupId}/ledger?cycle=${value}`;
-          }}
-        >
-          <SelectTrigger className="w-32">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {cycles.map((c) => (
-              <SelectItem key={c.id} value={c.cycle_number.toString()}>
-                Cycle {c.cycle_number}
-                {c.status === "open" && " (Current)"}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <CycleSelector
+          cycles={cycles}
+          selectedCycleNumber={selectedCycleNumber}
+          groupId={groupId}
+        />
       </div>
 
       {/* Cycle Summary */}

@@ -65,7 +65,7 @@ export async function AlertsSection() {
   // Process each cycle for alerts
   for (const cycle of cycles) {
     const membership = memberships.find((m) => m.group_id === cycle.group_id);
-    if (!membership) continue;
+    if (!membership || !membership.groups) continue;
 
     const group = membership.groups as {
       id: string;

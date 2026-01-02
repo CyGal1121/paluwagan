@@ -6,11 +6,20 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { Loader2, User, Camera } from "lucide-react";
+import { Loader2, User, Camera, ArrowRight } from "lucide-react";
 import { getInitials } from "@/lib/utils";
+import type { Database } from "@/types/database";
+
+type UserUpdate = Database["public"]["Tables"]["users"]["Update"];
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -74,12 +83,14 @@ export default function OnboardingPage() {
       }
 
       // Update user profile
-      const { error } = await supabase
+      const updateData: UserUpdate = {
+        name: name.trim(),
+        photo_url: uploadedPhotoUrl,
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
         .from("users")
-        .update({
-          name: name.trim(),
-          photo_url: uploadedPhotoUrl,
-        })
+        .update(updateData)
         .eq("id", user.id);
 
       if (error) {
@@ -100,69 +111,111 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center p-4 bg-gradient-to-b from-background to-muted">
-      <div className="w-full max-w-sm space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-primary">Pinoy Paluwagan</h1>
-          <p className="text-muted-foreground">Let&apos;s set up your profile</p>
-        </div>
+    <div className="min-h-dvh flex flex-col bg-gradient-to-b from-background to-muted/50">
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:py-12">
+        <div className="w-full max-w-md space-y-8">
+          {/* Header */}
+          <div className="text-center space-y-3">
+            <img
+              src="/logo.png"
+              alt="Pinoy Paluwagan"
+              className="w-16 h-16 mx-auto mb-2"
+            />
+            <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+              Step 1 of 1
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+              Complete Your Profile
+            </h1>
+            <p className="text-muted-foreground text-base max-w-xs mx-auto">
+              Let your group members know who you are
+            </p>
+          </div>
 
-        <Card>
-          <CardHeader className="space-y-1">
-            <CardTitle className="text-xl">Your Profile</CardTitle>
-            <CardDescription>
-              This is how you&apos;ll appear to your group members
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="flex justify-center">
-                <div className="relative">
-                  <Avatar className="w-24 h-24">
-                    <AvatarImage src={photoUrl || ""} alt="Profile photo" />
-                    <AvatarFallback className="text-2xl bg-primary/10">
-                      {name ? getInitials(name) : <User className="w-8 h-8 text-muted-foreground" />}
-                    </AvatarFallback>
-                  </Avatar>
-                  <label
-                    htmlFor="photo"
-                    className="absolute bottom-0 right-0 bg-primary text-primary-foreground rounded-full p-2 cursor-pointer hover:bg-primary/90 transition-colors"
-                  >
-                    <Camera className="w-4 h-4" />
-                    <input
-                      id="photo"
-                      type="file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={handlePhotoChange}
-                      className="sr-only"
-                    />
-                  </label>
+          {/* Profile Card */}
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="space-y-1 pb-4">
+              <CardTitle className="text-xl text-center">Your Profile</CardTitle>
+              <CardDescription className="text-center">
+                This is how you&apos;ll appear to your group
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pb-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Avatar Section */}
+                <div className="flex justify-center">
+                  <div className="relative group">
+                    <Avatar className="w-28 h-28 sm:w-32 sm:h-32 border-4 border-background shadow-lg">
+                      <AvatarImage src={photoUrl || ""} alt="Profile photo" />
+                      <AvatarFallback className="text-3xl bg-muted">
+                        {name ? (
+                          getInitials(name)
+                        ) : (
+                          <User className="w-12 h-12 text-muted-foreground" />
+                        )}
+                      </AvatarFallback>
+                    </Avatar>
+                    <label
+                      htmlFor="photo"
+                      className="absolute bottom-1 right-1 bg-primary text-primary-foreground rounded-full p-2.5 cursor-pointer hover:bg-primary/90 transition-all shadow-md hover:scale-105"
+                    >
+                      <Camera className="w-5 h-5" />
+                      <input
+                        id="photo"
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handlePhotoChange}
+                        className="sr-only"
+                      />
+                    </label>
+                  </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="name">Full Name</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  placeholder="Juan dela Cruz"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  disabled={isLoading}
-                  autoFocus
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter the name you want your group to see
-                </p>
-              </div>
+                {/* Name Input */}
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="text-base">
+                    Full Name
+                  </Label>
+                  <Input
+                    id="name"
+                    type="text"
+                    placeholder="Juan dela Cruz"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    disabled={isLoading}
+                    autoFocus
+                    className="h-12 text-base"
+                    autoComplete="name"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    This name will be visible to your paluwagan group members
+                  </p>
+                </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Continue
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+                {/* Submit Button */}
+                <Button
+                  type="submit"
+                  className="w-full h-12 text-base"
+                  disabled={isLoading || !name.trim()}
+                >
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  ) : (
+                    <>
+                      Continue
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Skip Option */}
+          <p className="text-center text-sm text-muted-foreground">
+            You can always update your profile later in settings
+          </p>
+        </div>
       </div>
     </div>
   );

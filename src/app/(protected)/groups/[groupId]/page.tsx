@@ -10,7 +10,6 @@ import {
   Users,
   Calendar,
   DollarSign,
-  BookOpen,
   Clock,
   CheckCircle,
   AlertCircle,
@@ -20,6 +19,7 @@ import { InviteDialog } from "@/components/invite-dialog";
 import { ContributionCard } from "@/components/contribution-card";
 import { StartGroupButton } from "@/components/start-group-button";
 import type { Group, GroupMember, Cycle, Contribution, User } from "@/types/database";
+import { calculateNetPayout } from "@/types/database";
 
 // Type definitions for joined queries
 type GroupWithOrganizer = Group & {
@@ -160,6 +160,14 @@ export default async function GroupPage({ params }: GroupPageProps) {
   const activeMembers = members.filter((m) => m.status === "active");
   const pendingMembers = members.filter((m) => m.status === "pending");
 
+  // Calculate net payout after organizer fee
+  const payoutDetails = calculateNetPayout(
+    group.contribution_amount,
+    group.members_limit,
+    group.organizer_fee_type,
+    group.organizer_fee_value
+  );
+
   return (
     <div className="py-6 space-y-6">
       {/* Header */}
@@ -238,9 +246,14 @@ export default async function GroupPage({ params }: GroupPageProps) {
         <Card>
           <CardContent className="p-4 text-center">
             <DollarSign className="h-5 w-5 mx-auto text-success mb-1" />
-            <p className="text-xs text-muted-foreground">Pool</p>
+            <p className="text-xs text-muted-foreground">Net Payout</p>
             <p className="font-semibold text-success">
-              {formatCurrency(group.contribution_amount * group.members_limit)}
+              {formatCurrency(payoutDetails.netPayout)}
+            </p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              {group.organizer_fee_type === "percentage"
+                ? `${group.organizer_fee_value}% fee`
+                : `₱${group.organizer_fee_value} fee`}
             </p>
           </CardContent>
         </Card>
@@ -293,28 +306,44 @@ export default async function GroupPage({ params }: GroupPageProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             {/* Payout Recipient */}
-            {currentCycle.users && (
-              <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg flex-wrap gap-3">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={currentCycle.users.photo_url || ""} />
-                    <AvatarFallback>
-                      {getInitials(currentCycle.users.name || "?")}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="text-sm text-muted-foreground">Payout Recipient</p>
-                    <p className="font-medium">
-                      {currentCycle.users.name}
-                      {currentCycle.users.id === user.id && " (You)"}
+            {currentCycle.users && (() => {
+              // Calculate actual payout based on current active members
+              const actualPayout = calculateNetPayout(
+                group.contribution_amount,
+                activeMembers.length,
+                group.organizer_fee_type,
+                group.organizer_fee_value
+              );
+              return (
+                <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10">
+                      <AvatarImage src={currentCycle.users.photo_url || ""} />
+                      <AvatarFallback>
+                        {getInitials(currentCycle.users.name || "?")}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <p className="text-sm text-muted-foreground">Payout Recipient</p>
+                      <p className="font-medium">
+                        {currentCycle.users.name}
+                        {currentCycle.users.id === user.id && " (You)"}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold text-success">
+                      {formatCurrency(actualPayout.netPayout)}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      after {group.organizer_fee_type === "percentage"
+                        ? `${group.organizer_fee_value}%`
+                        : formatCurrency(group.organizer_fee_value)} fee
                     </p>
                   </div>
                 </div>
-                <p className="font-semibold text-success">
-                  {formatCurrency(group.contribution_amount * activeMembers.length)}
-                </p>
-              </div>
-            )}
+              );
+            })()}
 
             {/* Cycle Progress */}
             <div className="flex items-center justify-between text-sm">
@@ -341,38 +370,6 @@ export default async function GroupPage({ params }: GroupPageProps) {
         </Card>
       )}
 
-      {/* Quick Links */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Button variant="outline" asChild className="h-auto py-4">
-          <Link href={`/groups/${groupId}/ledger`}>
-            <BookOpen className="mr-2 h-5 w-5" />
-            View Ledger
-          </Link>
-        </Button>
-        <Button variant="outline" asChild className="h-auto py-4">
-          <Link href={`/groups/${groupId}/members`}>
-            <Users className="mr-2 h-5 w-5" />
-            Members
-            {pendingMembers.length > 0 && isOrganizer && (
-              <Badge variant="destructive" className="ml-2">
-                {pendingMembers.length}
-              </Badge>
-            )}
-          </Link>
-        </Button>
-        <Button variant="outline" asChild className="h-auto py-4">
-          <Link href={`/groups/${groupId}/cycles`}>
-            <Calendar className="mr-2 h-5 w-5" />
-            All Cycles
-          </Link>
-        </Button>
-        <Button variant="outline" asChild className="h-auto py-4">
-          <Link href={`/groups/${groupId}/audit`}>
-            <Clock className="mr-2 h-5 w-5" />
-            Activity Log
-          </Link>
-        </Button>
-      </div>
     </div>
   );
 }
