@@ -29,11 +29,23 @@ export async function AlertsSection() {
   const alerts: Alert[] = [];
 
   // Get user's active group memberships
-  const { data: memberships } = await supabase
+  const { data: membershipsRaw } = await supabase
     .from("group_members")
     .select("group_id, groups(id, name, contribution_amount, frequency)")
     .eq("user_id", user.id)
     .eq("status", "active");
+
+  type MembershipData = {
+    group_id: string;
+    groups: {
+      id: string;
+      name: string;
+      contribution_amount: number;
+      frequency: string;
+    } | null;
+  };
+
+  const memberships = membershipsRaw as MembershipData[] | null;
 
   if (!memberships || memberships.length === 0) {
     return null;
@@ -42,11 +54,21 @@ export async function AlertsSection() {
   const groupIds = memberships.map((m) => m.group_id);
 
   // Get open cycles for user's groups
-  const { data: cycles } = await supabase
+  const { data: cyclesRaw } = await supabase
     .from("cycles")
     .select("id, group_id, cycle_number, due_date, payout_user_id")
     .in("group_id", groupIds)
     .eq("status", "open");
+
+  type CycleData = {
+    id: string;
+    group_id: string;
+    cycle_number: number;
+    due_date: string;
+    payout_user_id: string | null;
+  };
+
+  const cycles = cyclesRaw as CycleData[] | null;
 
   if (!cycles || cycles.length === 0) {
     return null;
@@ -54,11 +76,19 @@ export async function AlertsSection() {
 
   // Get user's contributions for these cycles
   const cycleIds = cycles.map((c) => c.id);
-  const { data: contributions } = await supabase
+  const { data: contributionsRaw } = await supabase
     .from("contributions")
     .select("id, cycle_id, status")
     .in("cycle_id", cycleIds)
     .eq("user_id", user.id);
+
+  type ContributionData = {
+    id: string;
+    cycle_id: string;
+    status: string;
+  };
+
+  const contributions = contributionsRaw as ContributionData[] | null;
 
   const contributionMap = new Map(contributions?.map((c) => [c.cycle_id, c]) || []);
 

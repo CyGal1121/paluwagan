@@ -15,6 +15,7 @@ import {
 import { Home, LogOut, Menu, Plus, ShieldCheck, User } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import { NotificationBell } from "@/components/notification-bell";
+import { ChatBell } from "@/components/chat-bell";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useSidebar } from "@/components/sidebar/sidebar-context";
 import { Logo } from "@/components/ui/logo";
@@ -59,6 +60,7 @@ export function ProtectedNav({ user }: ProtectedNavProps) {
 
         <div className="flex items-center gap-2">
           <ThemeToggle />
+          <ChatBell userId={user.id} />
           <NotificationBell userId={user.id} />
 
           <DropdownMenu>

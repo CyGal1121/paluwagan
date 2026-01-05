@@ -240,12 +240,12 @@ export default function CreateBranchPage() {
                 />
 
                 {/* Fee info */}
-                <div className="rounded-lg border bg-amber-50 dark:bg-amber-950/20 p-4">
+                <div className="rounded-lg border border-amber-200/60 dark:border-amber-700 bg-amber-50/40 dark:bg-amber-950/30 p-4">
                   <div className="flex items-start gap-3">
-                    <Info className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
                     <div>
-                      <p className="font-medium text-amber-800 dark:text-amber-200">Branch Fees</p>
-                      <p className="text-sm text-amber-700 dark:text-amber-300">
+                      <p className="font-medium text-foreground">Branch Fees</p>
+                      <p className="text-sm text-muted-foreground">
                         Setup fee: {formatCurrency(BRANCH_FEES.SETUP)} (one-time) <br />
                         Monthly fee: {formatCurrency(BRANCH_FEES.MONTHLY)}/month
                       </p>

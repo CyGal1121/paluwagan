@@ -18,7 +18,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
   const supabase = await createClient();
 
   // Get invite with group details
-  const { data: invite } = await supabase
+  const { data: inviteRaw } = await supabase
     .from("invites")
     .select(
       `
@@ -45,6 +45,28 @@ export default async function InvitePage({ params }: InvitePageProps) {
     )
     .eq("token", token)
     .single();
+
+  type InviteData = {
+    id: string;
+    token: string;
+    expires_at: string;
+    max_uses: number | null;
+    use_count: number;
+    groups: {
+      id: string;
+      name: string;
+      contribution_amount: number;
+      frequency: string;
+      start_date: string;
+      members_limit: number;
+      status: string;
+      rules_json: Record<string, unknown>;
+      organizer_user_id: string;
+      users: { name: string | null };
+    } | null;
+  };
+
+  const invite = inviteRaw as InviteData | null;
 
   if (!invite || !invite.groups) {
     notFound();
@@ -82,7 +104,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
   } = await supabase.auth.getUser();
 
   // Check if already a member
-  let existingMembership = null;
+  let existingMembership: { status: string } | null = null;
   let membershipSummary = null;
   let membershipValidation = null;
 
@@ -93,7 +115,7 @@ export default async function InvitePage({ params }: InvitePageProps) {
       .eq("group_id", group.id)
       .eq("user_id", user.id)
       .single();
-    existingMembership = data;
+    existingMembership = data as { status: string } | null;
 
     // Get user's current membership status
     membershipSummary = await getUserMembershipSummary(user.id);

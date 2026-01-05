@@ -117,7 +117,7 @@ export function ChatContainer({
           },
           async (payload) => {
             // Fetch the full message with user data
-            const { data: newMessage } = await supabase
+            const { data: newMessageRaw } = await supabase
               .from("chat_messages")
               .select(`
                 *,
@@ -126,13 +126,15 @@ export function ChatContainer({
               .eq("id", payload.new.id)
               .single();
 
+            const newMessage = newMessageRaw as ChatMessageWithUser | null;
+
             if (newMessage) {
               setMessages((prev) => {
                 // Avoid duplicates
                 if (prev.some((m) => m.id === newMessage.id)) {
                   return prev;
                 }
-                return [...prev, newMessage as unknown as ChatMessageWithUser];
+                return [...prev, newMessage];
               });
 
               // Mark as read if from another user

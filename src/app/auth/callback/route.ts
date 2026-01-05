@@ -23,7 +23,9 @@ export async function GET(request: Request) {
           .eq("id", user.id)
           .single();
 
-        if (!profile?.name) {
+        const typedProfile = profile as { name: string | null } | null;
+
+        if (!typedProfile?.name) {
           return NextResponse.redirect(`${origin}/onboarding`);
         }
       }

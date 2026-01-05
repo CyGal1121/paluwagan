@@ -165,8 +165,8 @@ export default async function GroupPage({ params }: GroupPageProps) {
   const payoutDetails = calculateNetPayout(
     group.contribution_amount,
     group.members_limit,
-    group.organizer_fee_type,
-    group.organizer_fee_value
+    group.organizer_fee_type ?? "percentage",
+    group.organizer_fee_value ?? 5
   );
 
   return (
@@ -312,8 +312,8 @@ export default async function GroupPage({ params }: GroupPageProps) {
               const actualPayout = calculateNetPayout(
                 group.contribution_amount,
                 activeMembers.length,
-                group.organizer_fee_type,
-                group.organizer_fee_value
+                group.organizer_fee_type ?? "percentage",
+                group.organizer_fee_value ?? 5
               );
               return (
                 <div className="flex items-center justify-between p-3 bg-success/10 rounded-lg flex-wrap gap-3">
@@ -339,7 +339,7 @@ export default async function GroupPage({ params }: GroupPageProps) {
                     <p className="text-[10px] text-muted-foreground">
                       after {group.organizer_fee_type === "percentage"
                         ? `${group.organizer_fee_value}%`
-                        : formatCurrency(group.organizer_fee_value)} fee
+                        : formatCurrency(group.organizer_fee_value ?? 5)} fee
                     </p>
                   </div>
                 </div>

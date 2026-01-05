@@ -316,7 +316,7 @@ async function BranchesList({ categorySlug }: { categorySlug?: string }) {
   if (!user) return null;
 
   // Get user's branches with category info
-  const { data: memberships } = await supabase
+  const { data: membershipsData } = await supabase
     .from("group_members")
     .select(
       `
@@ -341,6 +341,28 @@ async function BranchesList({ categorySlug }: { categorySlug?: string }) {
     )
     .eq("user_id", user.id)
     .in("status", ["active", "pending"]);
+
+  type MembershipType = {
+    role: string;
+    status: string;
+    groups: {
+      id: string;
+      name: string;
+      contribution_amount: number;
+      frequency: string;
+      status: string;
+      members_limit: number;
+      category_id: string | null;
+      categories: {
+        id: string;
+        name: string;
+        slug: string;
+        icon: string | null;
+      } | null;
+    } | null;
+  };
+
+  const memberships = membershipsData as MembershipType[] | null;
 
   if (!memberships || memberships.length === 0) {
     return (

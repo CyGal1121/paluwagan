@@ -39,12 +39,14 @@ export async function sendMessage(
   }
 
   // Check if user is a member of the group
-  const { data: membership } = await supabase
+  const { data: membershipRaw } = await supabase
     .from("group_members")
     .select("status")
     .eq("group_id", groupId)
     .eq("user_id", user.id)
     .single();
+
+  const membership = membershipRaw as { status: string } | null;
 
   if (!membership || membership.status !== "active") {
     return { success: false, error: "You are not an active member of this group" };

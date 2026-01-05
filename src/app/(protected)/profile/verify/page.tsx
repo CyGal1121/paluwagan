@@ -21,15 +21,25 @@ export default async function VerifyPage() {
     redirect("/login");
   }
 
-  const { data: userData } = await supabase
+  const { data: userDataRaw } = await supabase
     .from("users")
     .select("name, photo_url, id_photo_url, id_verification_status, id_rejection_reason")
     .eq("id", user.id)
     .single();
 
-  if (!userData) {
+  if (!userDataRaw) {
     redirect("/onboarding");
   }
+
+  type UserData = {
+    name: string | null;
+    photo_url: string | null;
+    id_photo_url: string | null;
+    id_verification_status: string | null;
+    id_rejection_reason: string | null;
+  };
+
+  const userData = userDataRaw as UserData;
 
   return (
     <div className="py-6 max-w-lg mx-auto">

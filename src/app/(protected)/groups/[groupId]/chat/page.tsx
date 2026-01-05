@@ -27,11 +27,13 @@ export default async function ChatPage({ params }: ChatPageProps) {
     .eq("user_id", user.id)
     .single();
 
-  if (!membership || membership.status !== "active") {
+  const typedMembership = membership as { role: string; status: string } | null;
+
+  if (!typedMembership || typedMembership.status !== "active") {
     redirect("/home");
   }
 
-  const isOrganizer = membership.role === "organizer";
+  const isOrganizer = typedMembership.role === "organizer";
 
   // Get group info
   const { data: group } = await supabase
@@ -39,6 +41,8 @@ export default async function ChatPage({ params }: ChatPageProps) {
     .select("name")
     .eq("id", groupId)
     .single();
+
+  const groupName = (group as { name: string } | null)?.name ?? "Group";
 
   return (
     <div className="h-[calc(100dvh-3.5rem)] flex flex-col">
@@ -49,7 +53,7 @@ export default async function ChatPage({ params }: ChatPageProps) {
         </div>
         <div>
           <h1 className="font-semibold">Group Chat</h1>
-          <p className="text-xs text-muted-foreground">{group?.name}</p>
+          <p className="text-xs text-muted-foreground">{groupName}</p>
         </div>
       </div>
 

@@ -25,15 +25,28 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const { data: userData } = await supabase
+  const { data: userDataRaw } = await supabase
     .from("users")
     .select("*")
     .eq("id", user.id)
     .single();
 
-  if (!userData) {
+  if (!userDataRaw) {
     redirect("/onboarding");
   }
+
+  type UserData = {
+    id: string;
+    name: string | null;
+    email: string | null;
+    phone: string | null;
+    photo_url: string | null;
+    id_verification_status: string | null;
+    id_verified_at: string | null;
+    created_at: string;
+  };
+
+  const userData = userDataRaw as UserData;
 
   const verificationStatus = (userData.id_verification_status as "none" | "pending" | "verified" | "rejected") || "none";
   const isVerified = verificationStatus === "verified";

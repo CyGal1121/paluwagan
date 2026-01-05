@@ -72,7 +72,8 @@ export async function createCustomCategory(
     return { success: false, error: "A category with this name already exists" };
   }
 
-  const { data, error } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data, error } = await (supabase as any)
     .from("categories")
     .insert({
       name,
@@ -130,7 +131,7 @@ export async function getBranchesByCategory(
       .eq("slug", categorySlug)
       .eq("is_active", true)
       .single();
-    category = data;
+    category = data as Category | null;
   }
 
   // Get user's branches
@@ -154,7 +155,23 @@ export async function getBranchesByCategory(
     .eq("user_id", user.id)
     .in("status", ["active", "pending"]);
 
-  const { data: memberships } = await query;
+  const { data: membershipsRaw } = await query;
+
+  type MembershipData = {
+    role: string;
+    status: string;
+    groups: {
+      id: string;
+      name: string;
+      contribution_amount: number;
+      frequency: string;
+      status: string;
+      members_limit: number;
+      category_id: string | null;
+    } | null;
+  };
+
+  const memberships = membershipsRaw as MembershipData[] | null;
 
   if (!memberships) {
     return { category, branches: [] };
@@ -164,8 +181,7 @@ export async function getBranchesByCategory(
   let filteredMemberships = memberships;
   if (category) {
     filteredMemberships = memberships.filter((m) => {
-      const group = m.groups as { category_id: string | null };
-      return group?.category_id === category.id;
+      return m.groups?.category_id === category.id;
     });
   }
 
@@ -224,7 +240,7 @@ export async function getCategoriesWithBranchCounts(): Promise<
   }
 
   // Get user's memberships
-  const { data: memberships } = await supabase
+  const { data: membershipsRaw } = await supabase
     .from("group_members")
     .select(
       `
@@ -236,16 +252,22 @@ export async function getCategoriesWithBranchCounts(): Promise<
     .eq("user_id", user.id)
     .in("status", ["active", "pending"]);
 
+  type MembershipWithGroup = {
+    groups: { category_id: string | null } | null;
+  };
+
+  const memberships = membershipsRaw as MembershipWithGroup[] | null;
+  const typedCategories = categories as Category[];
+
   // Count branches per category
   const categoryCounts: Record<string, number> = {};
   memberships?.forEach((m) => {
-    const group = m.groups as { category_id: string | null };
-    if (group?.category_id) {
-      categoryCounts[group.category_id] = (categoryCounts[group.category_id] || 0) + 1;
+    if (m.groups?.category_id) {
+      categoryCounts[m.groups.category_id] = (categoryCounts[m.groups.category_id] || 0) + 1;
     }
   });
 
-  return categories.map((cat) => ({
+  return typedCategories.map((cat) => ({
     ...cat,
     branch_count: categoryCounts[cat.id] || 0,
   }));

@@ -39,11 +39,13 @@ export default function EditProfilePage() {
 
       setUserId(user.id);
 
-      const { data: userData } = await supabase
+      const { data: userDataRaw } = await supabase
         .from("users")
         .select("name, phone, photo_url")
         .eq("id", user.id)
         .single();
+
+      const userData = userDataRaw as { name: string | null; phone: string | null; photo_url: string | null } | null;
 
       if (userData) {
         setName(userData.name || "");
@@ -104,7 +106,8 @@ export default function EditProfilePage() {
       }
 
       // Update user profile
-      const { error: updateError } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error: updateError } = await (supabase as any)
         .from("users")
         .update({
           name: name.trim() || null,

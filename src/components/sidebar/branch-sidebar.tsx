@@ -110,7 +110,7 @@ export function BranchSidebar({
       {/* Branch Header */}
       <div className="px-3 py-4">
         <div className="flex items-center gap-2">
-          <CategoryIcon icon={category?.icon} className="h-5 w-5 text-primary" />
+          <CategoryIcon icon={category?.icon ?? null} className="h-5 w-5 text-primary" />
           <div className="flex-1 min-w-0">
             <h3 className="font-semibold truncate">{groupName}</h3>
             <div className="flex items-center gap-2">

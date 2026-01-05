@@ -32,7 +32,7 @@ export async function getCalendarData(groupId: string): Promise<CalendarData> {
   }
 
   // Get all cycles for the group with payout user details
-  const { data: cycles } = await supabase
+  const { data: cyclesRaw } = await supabase
     .from("cycles")
     .select(
       `
@@ -47,16 +47,31 @@ export async function getCalendarData(groupId: string): Promise<CalendarData> {
     .eq("group_id", groupId)
     .order("cycle_number", { ascending: true });
 
+  type CycleData = Cycle & {
+    users: Pick<User, "id" | "name" | "photo_url"> | null;
+  };
+
+  const cycles = cyclesRaw as CycleData[] | null;
+
   if (!cycles) {
     return { events: [], cycles: [] };
   }
 
   // Get the group for contribution amount and fee details
-  const { data: group } = await supabase
+  const { data: groupRaw } = await supabase
     .from("groups")
     .select("contribution_amount, members_limit, organizer_fee_type, organizer_fee_value")
     .eq("id", groupId)
     .single();
+
+  type GroupData = {
+    contribution_amount: number;
+    members_limit: number;
+    organizer_fee_type: "percentage" | "fixed" | null;
+    organizer_fee_value: number | null;
+  };
+
+  const group = groupRaw as GroupData | null;
 
   if (!group) {
     return { events: [], cycles: [] };
@@ -66,8 +81,8 @@ export async function getCalendarData(groupId: string): Promise<CalendarData> {
   const payoutDetails = calculateNetPayout(
     group.contribution_amount,
     group.members_limit,
-    group.organizer_fee_type,
-    group.organizer_fee_value
+    group.organizer_fee_type ?? "percentage",
+    group.organizer_fee_value ?? 5
   );
 
   const events: CalendarEvent[] = [];

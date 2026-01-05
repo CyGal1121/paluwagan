@@ -34,9 +34,11 @@ export function NotificationBell({ userId }: NotificationBellProps) {
         .order("created_at", { ascending: false })
         .limit(10);
 
-      if (data) {
-        setNotifications(data);
-        setUnreadCount(data.filter((n) => !n.read).length);
+      const typedData = data as Notification[] | null;
+
+      if (typedData) {
+        setNotifications(typedData);
+        setUnreadCount(typedData.filter((n) => !n.read).length);
       }
     };
 
@@ -67,7 +69,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   }, [userId, supabase]);
 
   const markAsRead = async (id: string) => {
-    await supabase.from("notifications").update({ read: true }).eq("id", id);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from("notifications").update({ read: true }).eq("id", id);
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
@@ -75,7 +78,8 @@ export function NotificationBell({ userId }: NotificationBellProps) {
   };
 
   const markAllAsRead = async () => {
-    await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any)
       .from("notifications")
       .update({ read: true })
       .eq("user_id", userId)
