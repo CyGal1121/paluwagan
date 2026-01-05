@@ -543,6 +543,61 @@ export type Database = {
           created_at?: string;
         };
       };
+      chat_messages: {
+        Row: {
+          id: string;
+          group_id: string;
+          user_id: string;
+          content: string;
+          reply_to_id: string | null;
+          is_system_message: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          user_id: string;
+          content: string;
+          reply_to_id?: string | null;
+          is_system_message?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          user_id?: string;
+          content?: string;
+          reply_to_id?: string | null;
+          is_system_message?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      chat_read_receipts: {
+        Row: {
+          id: string;
+          group_id: string;
+          user_id: string;
+          last_read_message_id: string | null;
+          last_read_at: string;
+        };
+        Insert: {
+          id?: string;
+          group_id: string;
+          user_id: string;
+          last_read_message_id?: string | null;
+          last_read_at?: string;
+        };
+        Update: {
+          id?: string;
+          group_id?: string;
+          user_id?: string;
+          last_read_message_id?: string | null;
+          last_read_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -580,6 +635,8 @@ export type Region = Tables<"regions">;
 export type Province = Tables<"provinces">;
 export type City = Tables<"cities">;
 export type Barangay = Tables<"barangays">;
+export type ChatMessage = Tables<"chat_messages">;
+export type ChatReadReceipt = Tables<"chat_read_receipts">;
 
 // Semantic aliases: Branch = Group (UI-facing name)
 export type Branch = Group;
@@ -628,6 +685,12 @@ export type ContributionWithUser = Contribution & {
 
 export type GroupMemberWithUser = GroupMember & {
   users: User;
+};
+
+// Chat types with relations
+export type ChatMessageWithUser = ChatMessage & {
+  users: Pick<User, "id" | "name" | "photo_url">;
+  reply_to?: ChatMessageWithUser | null;
 };
 
 // User verification helper type

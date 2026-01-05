@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import { Sidebar } from "./sidebar";
-import { SidebarProvider } from "./sidebar-context";
+import { SidebarProvider, useSidebar } from "./sidebar-context";
 import { cn } from "@/lib/utils";
 
 interface Branch {
@@ -23,9 +23,9 @@ interface SidebarLayoutProps {
   children: React.ReactNode;
 }
 
-export function SidebarLayout({ branches, header, children }: SidebarLayoutProps) {
+function SidebarLayoutInner({ branches, header, children }: SidebarLayoutProps) {
   const pathname = usePathname();
-
+  const { isOpen, isMobile } = useSidebar();
 
   // Find current branch if we're in a branch context
   const groupMatch = pathname.match(/^\/groups\/([^\/]+)/);
@@ -36,23 +36,30 @@ export function SidebarLayout({ branches, header, children }: SidebarLayoutProps
   const isOrganizer = currentBranch?.role === "organizer";
 
   return (
-    <SidebarProvider>
-      <div className="min-h-dvh flex flex-col bg-background">
-        {header}
-        <div className="flex flex-1">
-          <Sidebar
-            branches={branches}
-            currentBranch={currentBranch}
-            isOrganizer={isOrganizer}
-          />
-          <main className={cn(
-            "flex-1 transition-all duration-300",
-            "lg:ml-64" // Offset for sidebar on desktop
-          )}>
-            {children}
-          </main>
-        </div>
+    <div className="min-h-dvh flex flex-col bg-background">
+      {header}
+      <div className="flex flex-1">
+        <Sidebar
+          branches={branches}
+          currentBranch={currentBranch}
+          isOrganizer={isOrganizer}
+        />
+        <main className={cn(
+          "flex-1 transition-all duration-300",
+          // Offset for sidebar on desktop when open
+          !isMobile && isOpen && "lg:ml-64"
+        )}>
+          {children}
+        </main>
       </div>
+    </div>
+  );
+}
+
+export function SidebarLayout(props: SidebarLayoutProps) {
+  return (
+    <SidebarProvider>
+      <SidebarLayoutInner {...props} />
     </SidebarProvider>
   );
 }

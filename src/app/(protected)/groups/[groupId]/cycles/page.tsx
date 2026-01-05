@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ArrowLeft, Calendar, CheckCircle, Clock, User } from "lucide-react";
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils";
+import type { Cycle } from "@/types/database";
 
 interface CyclesPageProps {
   params: Promise<{ groupId: string }>;
@@ -27,9 +28,15 @@ export default async function CyclesPage({ params }: CyclesPageProps) {
   // Get group
   const { data: group } = await supabase
     .from("groups")
-    .select("*")
+    .select("name, status, frequency, contribution_amount, members_limit")
     .eq("id", groupId)
-    .single();
+    .single<{
+      name: string;
+      status: string;
+      frequency: string;
+      contribution_amount: number;
+      members_limit: number;
+    }>();
 
   if (!group) {
     notFound();
@@ -41,7 +48,7 @@ export default async function CyclesPage({ params }: CyclesPageProps) {
     .select("role, status")
     .eq("group_id", groupId)
     .eq("user_id", user.id)
-    .single();
+    .single<{ role: string; status: string }>();
 
   if (!membership || membership.status === "removed") {
     notFound();
@@ -61,7 +68,14 @@ export default async function CyclesPage({ params }: CyclesPageProps) {
     `
     )
     .eq("group_id", groupId)
-    .order("cycle_number", { ascending: true });
+    .order("cycle_number", { ascending: true })
+    .returns<
+      Array<
+        Cycle & {
+          users: { id: string; name: string | null; photo_url: string | null } | null;
+        }
+      >
+    >();
 
   const getStatusBadge = (status: string) => {
     switch (status) {

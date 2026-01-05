@@ -41,10 +41,13 @@ export async function updateSession(request: NextRequest) {
   const publicRoutes = ["/login", "/auth/callback"];
   const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
+  // Landing page is public
+  const isLandingPage = pathname === "/";
+
   // Invite routes are semi-public (viewable but joining requires auth)
   const isInviteRoute = pathname.startsWith("/invites/");
 
-  if (!user && !isPublicRoute && !isInviteRoute) {
+  if (!user && !isPublicRoute && !isInviteRoute && !isLandingPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

@@ -8,6 +8,7 @@ import {
   Calendar,
   Users,
   BookOpen,
+  MessageSquare,
   Receipt,
   ScrollText,
   Settings,
@@ -67,15 +68,20 @@ export function BranchSidebar({
       icon: BookOpen,
     },
     {
+      title: "Chat",
+      href: `/groups/${groupId}/chat`,
+      icon: MessageSquare,
+    },
+    {
       title: "Activity Log",
       href: `/groups/${groupId}/audit`,
       icon: ScrollText,
     },
   ];
 
-  // Add organizer-only items (insert before Activity Log)
+  // Add organizer-only items (insert before Chat)
   if (isOrganizer) {
-    branchNavItems.splice(4, 0, {
+    branchNavItems.splice(5, 0, {
       title: "Branch Fees",
       href: `/groups/${groupId}/fees`,
       icon: Receipt,

@@ -31,16 +31,18 @@ Configured in `.mcp.json`:
 src/
 ├── app/
 │   ├── (auth)/             # Login, Onboarding (public)
-│   ├── (protected)/        # Home, Groups, Profile (authenticated)
+│   ├── (protected)/        # Home, Groups, Profile, Chat (authenticated)
 │   ├── auth/callback/      # Supabase auth callback
 │   └── invites/[token]/    # Invite link handling
 ├── components/
 │   ├── ui/                 # shadcn/ui components
 │   ├── categories/         # Category tabs, selector, icon
+│   ├── chat/               # Chat container, messages, input
+│   ├── sidebar/            # Global and branch sidebars
 │   └── verification/       # ID upload form, status badge
 ├── lib/
 │   ├── supabase/           # Supabase clients
-│   └── actions/            # Server actions (group, category, user)
+│   └── actions/            # Server actions (group, category, user, chat, notifications, export)
 └── types/database.ts       # TypeScript types
 ```
 
@@ -127,13 +129,16 @@ import { toast } from "sonner";
 toast.success("Done!");
 ```
 
+## Completed Features
+
+- [x] Group chat with real-time messaging
+- [x] Real-time notifications system
+- [x] Export reports (CSV for ledger and members)
+- [x] Dark mode toggle
+
 ## Pending Features
 
 - [ ] Calendar view (grid + timeline)
 - [ ] Fee tracking page
-- [ ] Real-time notifications
 - [ ] Payment integration
-- [ ] Group chat
-- [ ] Export reports
-- [ ] Dark mode
 - [ ] PWA support

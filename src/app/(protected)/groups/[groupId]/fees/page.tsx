@@ -31,7 +31,7 @@ export default async function FeesPage({ params }: FeesPageProps) {
     .select("role, status")
     .eq("group_id", groupId)
     .eq("user_id", user.id)
-    .single();
+    .single<{ role: string; status: string }>();
 
   if (!membership || membership.status === "removed") {
     notFound();
@@ -47,7 +47,7 @@ export default async function FeesPage({ params }: FeesPageProps) {
     .from("groups")
     .select("id, name, status")
     .eq("id", groupId)
-    .single();
+    .single<{ id: string; name: string; status: string }>();
 
   if (!group) {
     notFound();

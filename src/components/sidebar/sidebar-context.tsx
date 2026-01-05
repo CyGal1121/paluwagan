@@ -20,9 +20,8 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     const checkMobile = () => {
       const mobile = window.innerWidth < 1024;
       setIsMobile(mobile);
-      if (mobile) {
-        setIsOpen(false);
-      }
+      // On mobile, close sidebar. On desktop, open sidebar.
+      setIsOpen(!mobile);
     };
 
     checkMobile();

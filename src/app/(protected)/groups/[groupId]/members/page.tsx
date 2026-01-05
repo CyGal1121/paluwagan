@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowLeft, Crown, User } from "lucide-react";
 import { getInitials } from "@/lib/utils";
 import { MemberActions } from "@/components/member-actions";
+import type { GroupMember } from "@/types/database";
 
 interface MembersPageProps {
   params: Promise<{ groupId: string }>;
@@ -29,9 +30,9 @@ export default async function MembersPage({ params }: MembersPageProps) {
   // Get group
   const { data: group } = await supabase
     .from("groups")
-    .select("*")
+    .select("name, status, members_limit")
     .eq("id", groupId)
-    .single();
+    .single<{ name: string; status: string; members_limit: number }>();
 
   if (!group) {
     notFound();
@@ -43,7 +44,7 @@ export default async function MembersPage({ params }: MembersPageProps) {
     .select("role, status")
     .eq("group_id", groupId)
     .eq("user_id", user.id)
-    .single();
+    .single<{ role: string; status: string }>();
 
   if (!membership || membership.status === "removed") {
     notFound();
@@ -68,7 +69,14 @@ export default async function MembersPage({ params }: MembersPageProps) {
     .eq("group_id", groupId)
     .neq("status", "removed")
     .order("payout_position", { ascending: true, nullsFirst: false })
-    .order("joined_at", { ascending: true });
+    .order("joined_at", { ascending: true })
+    .returns<
+      Array<
+        GroupMember & {
+          users: { id: string; name: string | null; photo_url: string | null; email: string | null } | null;
+        }
+      >
+    >();
 
   const activeMembers = members?.filter((m) => m.status === "active") || [];
   const pendingMembers = members?.filter((m) => m.status === "pending") || [];

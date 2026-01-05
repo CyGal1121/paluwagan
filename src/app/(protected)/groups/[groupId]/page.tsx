@@ -78,7 +78,7 @@ export default async function GroupPage({ params }: GroupPageProps) {
     .select("*")
     .eq("group_id", groupId)
     .eq("user_id", user.id)
-    .single();
+    .single<GroupMember>();
 
   if (!membership || membership.status === "removed") {
     notFound();
@@ -145,7 +145,8 @@ export default async function GroupPage({ params }: GroupPageProps) {
     const { data: contributions } = await supabase
       .from("contributions")
       .select("status")
-      .eq("cycle_id", currentCycle.id);
+      .eq("cycle_id", currentCycle.id)
+      .returns<Array<{ status: string }>>();
 
     if (contributions) {
       cycleStats.total = contributions.length;

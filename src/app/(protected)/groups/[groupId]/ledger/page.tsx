@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/table";
 import { ArrowLeft, CheckCircle, Clock, AlertCircle, XCircle } from "lucide-react";
 import { CycleSelector } from "@/components/cycle-selector";
+import { ExportButton } from "@/components/export-button";
 import { formatCurrency, formatDate, getInitials } from "@/lib/utils";
 import { LedgerActions } from "@/components/ledger-actions";
+import type { Cycle, Contribution, Payout } from "@/types/database";
 
 interface LedgerPageProps {
   params: Promise<{ groupId: string }>;
@@ -39,9 +41,9 @@ export default async function LedgerPage({ params, searchParams }: LedgerPagePro
   // Get group
   const { data: group } = await supabase
     .from("groups")
-    .select("*")
+    .select("name, status, contribution_amount")
     .eq("id", groupId)
-    .single();
+    .single<{ name: string; status: string; contribution_amount: number }>();
 
   if (!group) {
     notFound();
@@ -53,7 +55,7 @@ export default async function LedgerPage({ params, searchParams }: LedgerPagePro
     .select("role, status")
     .eq("group_id", groupId)
     .eq("user_id", user.id)
-    .single();
+    .single<{ role: string; status: string }>();
 
   if (!membership || membership.status === "removed") {
     notFound();
@@ -66,7 +68,8 @@ export default async function LedgerPage({ params, searchParams }: LedgerPagePro
     .from("cycles")
     .select("*")
     .eq("group_id", groupId)
-    .order("cycle_number", { ascending: true });
+    .order("cycle_number", { ascending: true })
+    .returns<Cycle[]>();
 
   if (!cycles || cycles.length === 0) {
     return (
@@ -108,7 +111,14 @@ export default async function LedgerPage({ params, searchParams }: LedgerPagePro
     `
     )
     .eq("cycle_id", selectedCycle.id)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true })
+    .returns<
+      Array<
+        Contribution & {
+          users: { id: string; name: string | null; photo_url: string | null } | null;
+        }
+      >
+    >();
 
   // Get payout for selected cycle
   const { data: payout } = await supabase
@@ -124,7 +134,11 @@ export default async function LedgerPage({ params, searchParams }: LedgerPagePro
     `
     )
     .eq("cycle_id", selectedCycle.id)
-    .single();
+    .single<
+      Payout & {
+        users: { id: string; name: string | null; photo_url: string | null } | null;
+      }
+    >();
 
   // Calculate stats
   const stats = {
@@ -189,12 +203,15 @@ export default async function LedgerPage({ params, searchParams }: LedgerPagePro
           </div>
         </div>
 
-        {/* Cycle Selector */}
-        <CycleSelector
-          cycles={cycles}
-          selectedCycleNumber={selectedCycleNumber}
-          groupId={groupId}
-        />
+        {/* Actions */}
+        <div className="flex items-center gap-2">
+          <ExportButton groupId={groupId} />
+          <CycleSelector
+            cycles={cycles}
+            selectedCycleNumber={selectedCycleNumber}
+            groupId={groupId}
+          />
+        </div>
       </div>
 
       {/* Cycle Summary */}

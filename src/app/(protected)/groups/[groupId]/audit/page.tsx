@@ -122,7 +122,7 @@ export default async function AuditPage({ params }: AuditPageProps) {
     .from("groups")
     .select("name")
     .eq("id", groupId)
-    .single();
+    .single<{ name: string }>();
 
   if (!group) {
     notFound();
@@ -134,7 +134,7 @@ export default async function AuditPage({ params }: AuditPageProps) {
     .select("status")
     .eq("group_id", groupId)
     .eq("user_id", user.id)
-    .single();
+    .single<{ status: string }>();
 
   if (!membership || membership.status === "removed") {
     notFound();
@@ -154,7 +154,14 @@ export default async function AuditPage({ params }: AuditPageProps) {
     )
     .eq("group_id", groupId)
     .order("created_at", { ascending: false })
-    .limit(100);
+    .limit(100)
+    .returns<
+      Array<
+        AuditLog & {
+          users: { name: string | null; photo_url: string | null } | null;
+        }
+      >
+    >();
 
   return (
     <div className="py-6 space-y-6">

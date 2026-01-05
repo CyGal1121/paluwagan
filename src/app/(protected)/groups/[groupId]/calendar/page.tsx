@@ -26,10 +26,10 @@ export default async function CalendarPage({ params }: CalendarPageProps) {
   // Verify user is member of this group
   const { data: membership } = await supabase
     .from("group_members")
-    .select("*")
+    .select("status")
     .eq("group_id", groupId)
     .eq("user_id", user.id)
-    .single();
+    .single<{ status: string }>();
 
   if (!membership || membership.status === "removed") {
     notFound();
@@ -40,7 +40,15 @@ export default async function CalendarPage({ params }: CalendarPageProps) {
     .from("groups")
     .select("id, name, status, frequency, start_date, contribution_amount, members_limit")
     .eq("id", groupId)
-    .single();
+    .single<{
+      id: string;
+      name: string;
+      status: string;
+      frequency: string;
+      start_date: string | null;
+      contribution_amount: number;
+      members_limit: number;
+    }>();
 
   if (!group) {
     notFound();
